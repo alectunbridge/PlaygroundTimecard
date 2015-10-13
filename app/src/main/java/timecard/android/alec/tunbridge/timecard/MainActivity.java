@@ -1,5 +1,7 @@
 package timecard.android.alec.tunbridge.timecard;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -20,6 +22,15 @@ public class MainActivity extends AppCompatActivity {
     private TextView mTimeLabel;
     private boolean running;
 
+    private Runnable mUpdateTimeTask = new Runnable() {
+        public void run() {
+            long millis = System.currentTimeMillis() - mStartTime;
+            mTimeLabel.setText(String.format("%6.2f", millis/1000.0));
+            mHandler.postAtTime(this,
+                    SystemClock.uptimeMillis() + 10);
+        }
+    };
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -36,12 +47,28 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
+        mTimeLabel.setText(String.format("%6.2f", 0.0));
     }
 
     @Override
     protected void onStart() {
-        mTimeLabel.setText(String.format("%6.2f", 0.0));
         super.onStart();
+    }
+
+    @Override
+    protected void onPause() {
+        SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPreferences.edit();
+        editor.putLong(getString(R.string.start_time),mStartTime);
+        editor.commit();
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
+        mStartTime = sharedPreferences.getLong(getString(R.string.start_time),0);
+        super.onResume();
     }
 
     @Override
@@ -50,6 +77,7 @@ public class MainActivity extends AppCompatActivity {
         getMenuInflater().inflate(R.menu.menu_main, menu);
         return true;
     }
+
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -66,6 +94,23 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    public void reset(View view){
+        if(!running) {
+            mStartTime = 0;
+            mTimeLabel.setText(String.format("%6.2f", 0.0));
+        }
+    }
+
+
+    public void startStop(View view) {
+        if (running) {
+            running = false;
+            stop();
+        } else {
+            running = true;
+            start();
+        }
+    }
 
     private void start() {
         if(mStartTime==0) {
@@ -78,30 +123,5 @@ public class MainActivity extends AppCompatActivity {
 
     private void stop() {
         mHandler.removeCallbacks(mUpdateTimeTask);
-    }
-
-
-    private Runnable mUpdateTimeTask = new Runnable() {
-        public void run() {
-            long millis = System.currentTimeMillis() - mStartTime;
-            mTimeLabel.setText(String.format("%6.2f", millis/1000.0));
-            mHandler.postAtTime(this,
-                    SystemClock.uptimeMillis() + 100);
-        }
-    };
-
-    public void startStop(View view) {
-        if (running) {
-            running = false;
-            stop();
-        } else {
-            running = true;
-            start();
-        }
-    }
-
-    public void reset(View view){
-        mStartTime = 0;
-        mTimeLabel.setText(String.format("%6.2f", 0.0));
     }
 }
