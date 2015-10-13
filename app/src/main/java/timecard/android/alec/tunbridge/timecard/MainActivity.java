@@ -10,23 +10,25 @@ import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
-import android.view.View.*;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
-    private Handler mHandler = new Handler();
-    private long mStartTime;
-    private TextView mTimeLabel;
+    private Handler handler = new Handler();
+    private long startTime;
+    private TextView timeLabel;
+    private Button startStopButton;
+    private Button resetButton;
     private boolean running;
 
     private Runnable mUpdateTimeTask = new Runnable() {
         public void run() {
-            long millis = System.currentTimeMillis() - mStartTime;
-            mTimeLabel.setText(String.format("%6.2f", millis/1000.0));
-            mHandler.postAtTime(this,
+            long millis = System.currentTimeMillis() - startTime;
+            timeLabel.setText(String.format("%6.2f", millis / 1000.0));
+            handler.postAtTime(this,
                     SystemClock.uptimeMillis() + 10);
         }
     };
@@ -36,7 +38,9 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        mTimeLabel = (TextView) findViewById(R.id.time);
+        timeLabel = (TextView) findViewById(R.id.time);
+        startStopButton = (Button) findViewById(R.id.button_start_stop);
+        resetButton = (Button) findViewById(R.id.button_reset);
         setSupportActionBar(toolbar);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
@@ -47,7 +51,7 @@ public class MainActivity extends AppCompatActivity {
                         .setAction("Action", null).show();
             }
         });
-        mTimeLabel.setText(String.format("%6.2f", 0.0));
+        timeLabel.setText(String.format("%6.2f", 0.0));
     }
 
     @Override
@@ -59,7 +63,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putLong(getString(R.string.start_time),mStartTime);
+        editor.putLong(getString(R.string.start_time), startTime);
         editor.commit();
         super.onPause();
     }
@@ -67,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
-        mStartTime = sharedPreferences.getLong(getString(R.string.start_time),0);
+        startTime = sharedPreferences.getLong(getString(R.string.start_time),0);
         super.onResume();
     }
 
@@ -96,8 +100,8 @@ public class MainActivity extends AppCompatActivity {
 
     public void reset(View view){
         if(!running) {
-            mStartTime = 0;
-            mTimeLabel.setText(String.format("%6.2f", 0.0));
+            startTime = 0;
+            timeLabel.setText(String.format("%6.2f", 0.0));
         }
     }
 
@@ -113,15 +117,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void start() {
-        if(mStartTime==0) {
-            mStartTime = System.currentTimeMillis();
+        resetButton.setEnabled(false);
+        if(startTime == 0) {
+            startTime = System.currentTimeMillis();
         }
-        mHandler.removeCallbacks(mUpdateTimeTask);
-        mHandler.post(mUpdateTimeTask);
+        handler.removeCallbacks(mUpdateTimeTask);
+        handler.post(mUpdateTimeTask);
 
     }
 
     private void stop() {
-        mHandler.removeCallbacks(mUpdateTimeTask);
+        resetButton.setEnabled(true);
+        handler.removeCallbacks(mUpdateTimeTask);
     }
 }
