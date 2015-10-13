@@ -4,4 +4,5 @@
     <string name="button_start_stop">Start/Stop</string>
     <string name="button_reset">Reset</string>
     <string name="start_time">start_time</string>
+    <string name="running">running</string>
 </resources>

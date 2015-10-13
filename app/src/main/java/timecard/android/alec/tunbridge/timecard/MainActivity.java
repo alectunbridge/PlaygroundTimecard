@@ -60,20 +60,22 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onPause() {
-        SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putLong(getString(R.string.start_time), startTime);
-        editor.commit();
-        super.onPause();
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        savedInstanceState.putLong(getString(R.string.start_time), startTime);
+        savedInstanceState.putBoolean(getString(R.string.running),running);
+        super.onSaveInstanceState(savedInstanceState);
     }
 
     @Override
-    protected void onResume() {
-        SharedPreferences sharedPreferences = getPreferences(Context.MODE_PRIVATE);
-        startTime = sharedPreferences.getLong(getString(R.string.start_time),0);
-        super.onResume();
+    public void onRestoreInstanceState(Bundle savedInstanceState){
+        super.onRestoreInstanceState(savedInstanceState);
+        startTime = savedInstanceState.getLong(getString(R.string.start_time));
+        running = savedInstanceState.getBoolean(getString(R.string.running));
+        if(running){
+            start();
+        }
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
