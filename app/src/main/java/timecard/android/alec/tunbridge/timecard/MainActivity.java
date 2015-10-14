@@ -1,7 +1,5 @@
 package timecard.android.alec.tunbridge.timecard;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.SystemClock;
@@ -19,9 +17,11 @@ import android.widget.TextView;
 import com.estimote.sdk.Beacon;
 import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
+import com.estimote.sdk.Utils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getSimpleName();
@@ -29,12 +29,16 @@ public class MainActivity extends AppCompatActivity {
     private Handler handler = new Handler();
     private long startTime;
     private TextView timeLabel;
+    private TextView startDistanceLabel;
+    private TextView finishDistanceLabel;
     private Button startStopButton;
     private Button resetButton;
     private boolean running;
     private BeaconManager beaconManager;
-    private List<Beacon> beacons;
-    private Region region;
+    private Region startRegion;
+    private Region finishRegion;
+    private double startDistance;
+    private double finishDistance;
 
     private Runnable mUpdateTimeTask = new Runnable() {
         public void run() {
@@ -51,6 +55,8 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         timeLabel = (TextView) findViewById(R.id.time);
+        startDistanceLabel = (TextView) findViewById(R.id.start_distance);
+        finishDistanceLabel = (TextView) findViewById(R.id.finish_distance);
         startStopButton = (Button) findViewById(R.id.button_start_stop);
         resetButton = (Button) findViewById(R.id.button_reset);
         setSupportActionBar(toolbar);
@@ -68,8 +74,8 @@ public class MainActivity extends AppCompatActivity {
         //Beacon stuff
         beaconManager = new BeaconManager(this);
         beaconManager.setForegroundScanPeriod(100,0);
-        beacons = new ArrayList<>();
-        region = new Region("regionid", null, null, null);
+        startRegion = new Region("startRegion", UUID.fromString("b9407f30-f5f8-466e-aff9-25556b57fe6d"), 16498, 12508);
+        finishRegion = new Region("finishRegion", UUID.fromString("b9407f30-f5f8-466e-aff9-25556b57fe6d"), 35227, 55488);
     }
 
     @Override
@@ -79,22 +85,42 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onBeaconsDiscovered(Region region, final List<Beacon> rangedBeacons) {
                 // Note that results are not delivered on UI thread.
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        // Just in case if there are multiple beacons with the same uuid, major, minor.
-                        // TODO we should really check these are our beacons here (also Start or Finish?)
-                        beacons = rangedBeacons;
-                        Log.d(TAG, String.format("Found %d beacons.", beacons.size()));
-                    }
-                });
+                if (region == startRegion) {
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            // Just in case if there are multiple beacons with the same uuid, major, minor.
+                            // TODO we should really check these are our beacons here (also Start or Finish?)
+                            Log.d(TAG, String.format("Found %d start beacons.", rangedBeacons.size()));
+                            if (rangedBeacons.size() != 0) {
+                                startDistance = Utils.computeAccuracy(rangedBeacons.get(0));
+                                startDistanceLabel.setText(String.format("%3.2f", startDistance));
+                            }
+                        }
+                    });
+                }
+                if (region == finishRegion){
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            // Just in case if there are multiple beacons with the same uuid, major, minor.
+                            // TODO we should really check these are our beacons here (also Start or Finish?)
+                            Log.d(TAG, String.format("Found %d finish beacons.", rangedBeacons.size()));
+                            if (rangedBeacons.size() != 0) {
+                                finishDistance = Utils.computeAccuracy(rangedBeacons.get(0));
+                                finishDistanceLabel.setText(String.format("%3.2f", finishDistance));
+                            }
+                        }
+                    });
+                }
             }
         });
 
         beaconManager.connect(new BeaconManager.ServiceReadyCallback() {
             @Override
             public void onServiceReady() {
-                beaconManager.startRanging(region);
+                beaconManager.startRanging(startRegion);
+                beaconManager.startRanging(finishRegion);
             }
         });
     }
