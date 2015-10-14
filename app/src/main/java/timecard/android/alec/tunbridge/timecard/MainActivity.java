@@ -9,13 +9,22 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.estimote.sdk.Beacon;
+import com.estimote.sdk.BeaconManager;
+import com.estimote.sdk.Region;
+
+import java.util.ArrayList;
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
+    private static final String TAG = MainActivity.class.getSimpleName();
 
     private Handler handler = new Handler();
     private long startTime;
@@ -23,6 +32,9 @@ public class MainActivity extends AppCompatActivity {
     private Button startStopButton;
     private Button resetButton;
     private boolean running;
+    private BeaconManager beaconManager;
+    private List<Beacon> beacons;
+    private Region region;
 
     private Runnable mUpdateTimeTask = new Runnable() {
         public void run() {
@@ -52,11 +64,45 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         timeLabel.setText(String.format("%6.2f", 0.0));
+
+        //Beacon stuff
+        beaconManager = new BeaconManager(this);
+        beaconManager.setForegroundScanPeriod(100,0);
+        beacons = new ArrayList<>();
+        region = new Region("regionid", null, null, null);
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+        beaconManager.setRangingListener(new BeaconManager.RangingListener() {
+            @Override
+            public void onBeaconsDiscovered(Region region, final List<Beacon> rangedBeacons) {
+                // Note that results are not delivered on UI thread.
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Just in case if there are multiple beacons with the same uuid, major, minor.
+                        // TODO we should really check these are our beacons here (also Start or Finish?)
+                        beacons = rangedBeacons;
+                        Log.d(TAG, String.format("Found %d beacons.", beacons.size()));
+                    }
+                });
+            }
+        });
+
+        beaconManager.connect(new BeaconManager.ServiceReadyCallback() {
+            @Override
+            public void onServiceReady() {
+                beaconManager.startRanging(region);
+            }
+        });
+    }
+
+    @Override
+    protected void onStop() {
+        beaconManager.disconnect();
+        super.onStop();
     }
 
     @Override
