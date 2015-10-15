@@ -31,7 +31,6 @@ public class MainActivity extends AppCompatActivity {
     private TextView timeLabel;
     private TextView startDistanceLabel;
     private TextView finishDistanceLabel;
-    private Button startStopButton;
     private Button resetButton;
     private boolean running;
     private BeaconManager beaconManager;
@@ -43,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     private Runnable mUpdateTimeTask = new Runnable() {
         public void run() {
             long millis = System.currentTimeMillis() - startTime;
+            //FIXME should be a chronometer
             timeLabel.setText(String.format("%6.2f", millis / 1000.0));
             handler.postAtTime(this,
                     SystemClock.uptimeMillis() + 10);
@@ -57,7 +57,6 @@ public class MainActivity extends AppCompatActivity {
         timeLabel = (TextView) findViewById(R.id.time);
         startDistanceLabel = (TextView) findViewById(R.id.start_distance);
         finishDistanceLabel = (TextView) findViewById(R.id.finish_distance);
-        startStopButton = (Button) findViewById(R.id.button_start_stop);
         resetButton = (Button) findViewById(R.id.button_reset);
         setSupportActionBar(toolbar);
 
@@ -96,7 +95,8 @@ public class MainActivity extends AppCompatActivity {
                                 startDistance = Utils.computeAccuracy(rangedBeacons.get(0));
                                 startDistanceLabel.setText(String.format("%3.2f", startDistance));
                             }
-                            if(!running && startDistance>1.0){
+                            //FIXME We can't start if we're simultaneously near the finish - or can we after a delay?
+                            if(!running && startDistance>1.0 && finishDistance>1.0){
                                 running = true;
                                 start();
                             }
@@ -192,17 +192,6 @@ public class MainActivity extends AppCompatActivity {
             finishDistance=-1;
             startDistanceLabel.setText(String.format("%3.2f", startDistance));
             finishDistanceLabel.setText(String.format("%3.2f", finishDistance));
-        }
-    }
-
-
-    public void startStop(View view) {
-        if (running) {
-            running = false;
-            stop();
-        } else {
-            running = true;
-            start();
         }
     }
 
