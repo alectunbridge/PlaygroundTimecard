@@ -96,6 +96,10 @@ public class MainActivity extends AppCompatActivity {
                                 startDistance = Utils.computeAccuracy(rangedBeacons.get(0));
                                 startDistanceLabel.setText(String.format("%3.2f", startDistance));
                             }
+                            if(!running && startDistance>1.0){
+                                running = true;
+                                start();
+                            }
                         }
                     });
                 }
@@ -109,6 +113,12 @@ public class MainActivity extends AppCompatActivity {
                             if (rangedBeacons.size() != 0) {
                                 finishDistance = Utils.computeAccuracy(rangedBeacons.get(0));
                                 finishDistanceLabel.setText(String.format("%3.2f", finishDistance));
+                            }
+                            if(running && finishDistance>0.0 && finishDistance<1.0) {
+                                running = false;
+                                stop();
+                                beaconManager.stopRanging(startRegion);
+                                beaconManager.stopRanging(finishRegion);
                             }
                         }
                     });
@@ -176,6 +186,12 @@ public class MainActivity extends AppCompatActivity {
         if(!running) {
             startTime = 0;
             timeLabel.setText(String.format("%6.2f", 0.0));
+            beaconManager.startRanging(startRegion);
+            beaconManager.startRanging(finishRegion);
+            startDistance=0.0;
+            finishDistance=-1;
+            startDistanceLabel.setText(String.format("%3.2f", startDistance));
+            finishDistanceLabel.setText(String.format("%3.2f", finishDistance));
         }
     }
 
