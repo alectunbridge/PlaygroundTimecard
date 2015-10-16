@@ -19,12 +19,11 @@ import com.estimote.sdk.BeaconManager;
 import com.estimote.sdk.Region;
 import com.estimote.sdk.Utils;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class MainActivity extends AppCompatActivity {
-    private static final String TAG = MainActivity.class.getSimpleName();
+public class TimingActivity extends AppCompatActivity {
+    private static final String TAG = TimingActivity.class.getSimpleName();
 
     private Handler handler = new Handler();
     private long startTime;
