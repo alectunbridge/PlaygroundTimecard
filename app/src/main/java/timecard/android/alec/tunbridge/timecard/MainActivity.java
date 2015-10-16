@@ -42,7 +42,10 @@ public class MainActivity extends AppCompatActivity {
     private Runnable mUpdateTimeTask = new Runnable() {
         public void run() {
             long millis = System.currentTimeMillis() - startTime;
-            //FIXME should be a chronometer
+            //if we've been running for more than ten seconds start looking for the finish
+            if(millis>10*1000){
+                beaconManager.startRanging(finishRegion);
+            }
             timeLabel.setText(String.format("%6.2f", millis / 1000.0));
             handler.postAtTime(this,
                     SystemClock.uptimeMillis() + 10);
@@ -96,7 +99,7 @@ public class MainActivity extends AppCompatActivity {
                                 startDistanceLabel.setText(String.format("%3.2f", startDistance));
                             }
                             //FIXME We can't start if we're simultaneously near the finish - or can we after a delay?
-                            if(!running && startDistance>1.0 && finishDistance>1.0){
+                            if(!running && startDistance>1.0){
                                 running = true;
                                 start();
                             }
@@ -130,7 +133,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onServiceReady() {
                 beaconManager.startRanging(startRegion);
-                beaconManager.startRanging(finishRegion);
             }
         });
     }
@@ -187,7 +189,6 @@ public class MainActivity extends AppCompatActivity {
             startTime = 0;
             timeLabel.setText(String.format("%6.2f", 0.0));
             beaconManager.startRanging(startRegion);
-            beaconManager.startRanging(finishRegion);
             startDistance=0.0;
             finishDistance=-1;
             startDistanceLabel.setText(String.format("%3.2f", startDistance));
